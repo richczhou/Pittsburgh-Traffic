@@ -1,5 +1,6 @@
 import * as THREE from './three/build/three.module.js';
 import {OrbitControls} from './three/examples/jsm/controls/OrbitControls.js';
+import {vertexShader, fragmentShader} from './shaders.js';
 
 // To keep ESLint happy
 /* global THREE */
@@ -40,7 +41,7 @@ function init() {
     // container param allows orbit only in the container, not the whole doc
     controls = new OrbitControls(camera, container);
     controls.minDistance = 500;
-    controls.maxDistance = 5000;
+    controls.maxDistance = 2000;
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
@@ -96,24 +97,39 @@ function init() {
             // Adding map plane
             const texLoader = new THREE.TextureLoader();
             texLoader.load(
-                'data/map.png',
+                'data/heightmap.png',
                 function(texture) {
-                    const mapGeo = flipY(new THREE.PlaneBufferGeometry());
-                    const mapMat = new THREE.MeshBasicMaterial({
-                        side: THREE.DoubleSide, 
-                        map: texture,
-                        transparent: true,
-                        opacity: 0.4
-                    });
-                    let mapMesh = new THREE.Mesh(mapGeo, mapMat);
-                    mapMesh.scale.set(700, 700, 700);
-                    mapMesh.rotateX(Math.PI);
-                    mapMesh.rotateZ(-Math.PI/4);
-                    mapMesh.position.set(-100, -150, 0)
-                    pitt.add(mapMesh);
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    // Giving map plane a bumpmap
+                    const heightMap = new THREE.TextureLoader().load(
+                        'data/heightmap.png',
+                        function(bumptexture) {
+                            bumptexture.wrapS = THREE.RepeatWrapping;
+                            bumptexture.wrapT = THREE.RepeatWrapping;
+                            let bumpScale = 100;
+                            const mapGeo = flipY(new THREE.PlaneBufferGeometry(700, 700, 50, 50));
+                            const mapMat = new THREE.ShaderMaterial({
+                                uniforms: {
+                                    bumpMap:	{ type: "t", value: bumptexture },
+                                    bumpScale:	{ type: "f", value: bumpScale },
+                                    uvTexture:	{ type: "t", value: texture },
+                                },
+                                vertexShader: vertexShader,
+                                fragmentShader: fragmentShader,
+                                side: THREE.DoubleSide, 
+                                transparent: true
+                            });
+                            let mapMesh = new THREE.Mesh(mapGeo, mapMat);
+                            mapMesh.rotateX(Math.PI);
+                            mapMesh.rotateZ(-Math.PI/4);
+                            mapMesh.position.set(-150, -150, -50)
+                            pitt.add(mapMesh);
+                        }
+                    )
                 }
             )
-
+            
             // Creating the point cloud
             const pointMaterial = new THREE.PointsMaterial( {
                 color: 0xFFFFFF,
