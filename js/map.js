@@ -13,8 +13,10 @@ let scene;
 let traffic;
 let particles;
 let particlePositions = new Float32Array(3 * 1305);
-let linePositions = new Float32Array(3 * 1305);
-let colors = new Float32Array(3 * 1305);
+// let linePositions = new Float32Array(3 * 1305);
+// let colors = new Float32Array(3 * 1305);
+let linePositions = []
+let colors = [];
 let pointCloud;
 let linesMesh;
 const particleCount = 5000;
@@ -153,48 +155,15 @@ function init() {
                 blending: THREE.AdditiveBlending
             });
 
-            // Connecting points
-            let linePosIter = 0;  
-            let maxConnections = 500;
-            
-            for (let i = 0; i < 1305; i++) {
-                if (linePosIter > 2 * maxConnections) break;
-                for (let j = i + 1; j < 1306; j++) {
-                    // const dist = Math.abs(particlePositions[i * 3 + 2] - particlePositions[j * 3 + 2]);
-                    const dist = Math.sqrt((particlePositions[i * 3] - particlePositions[j * 3]) ** 2 + 
-                                    (particlePositions[i * 3 + 1] - particlePositions[j * 3 + 1]) ** 2);
-                    if (dist < maxDistance) {
-                        // Lat, Long, Traffic, RGB I think?
-                        colors[linePosIter] = particlePositions[i * 3 + 2] / 100 - 0.1;
-                        linePositions[linePosIter++] = particlePositions[i * 3];
-                        
-                        colors[linePosIter] = 0;
-                        linePositions[linePosIter++] = particlePositions[i * 3 + 1];
-
-                        colors[linePosIter] = 1.2 - particlePositions[i * 3 + 2] / 100;
-                        linePositions[linePosIter++] = particlePositions[i * 3 + 2];
-
-                        colors[linePosIter] = 0.95;
-                        linePositions[linePosIter++] = particlePositions[j * 3];
-
-                        colors[linePosIter] = 0.95;
-                        linePositions[linePosIter++] = particlePositions[j * 3 + 1];
-
-                        colors[linePosIter] = 0.95;
-                        linePositions[linePosIter++] = particlePositions[j * 3 + 2];
-                        
-                        // i = j;
-                        break;
-                    }
-                    // console.log(linePosIter)
-                }
+            for (let i = 0; i < 2; i++) {
+                let buff = getPath();
+                linePositions.push(...buff.position);
+                colors.push(...buff.color);
             }
 
-            //console.log(linePositions)
-
-           const lines = new THREE.BufferGeometry();
+            const lines = new THREE.BufferGeometry();
             lines.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3).setUsage(THREE.DynamicDrawUsage));
-            lines.setAttribute( 'color', new THREE.BufferAttribute(colors, 3).setUsage(THREE.DynamicDrawUsage));
+            lines.setAttribute( 'color', new THREE.Float32BufferAttribute(colors, 3).setUsage(THREE.DynamicDrawUsage));
             lines.computeBoundingSphere();
             // lines.setDrawRange( 0, numConnected * 2 );
 
@@ -219,7 +188,6 @@ function init() {
                 update();
                 render();
             });
-
         }  // CALLBACK END
     );
 }
@@ -227,7 +195,9 @@ function init() {
 function update() {
     controls.update();
 
-    // TODO but didn't get to lmfao: update line art
+    // TODO update line art
+    
+	// linesMesh.geometry.attributes.position.needsUpdate = true;
 }
 
 function render() {
@@ -249,6 +219,77 @@ function flipY( geometry ) {
         uv.setY( i, 1 - uv.getY( i ) );
     }
     return geometry;
+}
+
+function getPath() {
+    let bufferIndex = [];
+    let bufferColor = [];
+    // randomize how many points are in each generated path
+    let pointsInPath = Math.floor(Math.random() * 10 + 3);
+
+    // create a path between them in a roughly straight line
+    let point1 = Math.floor(Math.random() * 1305);
+    let point2 = Math.floor(Math.random() * 1305);
+    while (point1 == point2 &&
+           Math.sqrt((particlePositions[point1 * 3] - particlePositions[point2 * 3]) ** 2 + 
+                     (particlePositions[point1 * 3 + 1] - particlePositions[point2 * 3 + 1]) ** 2) < 1000) {point2 = Math.floor(Math.random() * 1305)};
+    let pointVector = new THREE.Vector2(particlePositions[point2 * 3] - particlePositions[point1 * 3],
+                                        particlePositions[point2 * 3 + 1] - particlePositions[point1 * 3 + 1]).normalize();
+
+    let pathPoints = []
+    while (pathPoints.length < pointsInPath) {
+    // for (let i = 0; i < 1300; i++) {
+        let testPoint = Math.floor(Math.random() * 1305);
+        // check if its between both points
+        if (true || (particlePositions[point1*3] < particlePositions[testPoint*3] && particlePositions[testPoint*3] < particlePositions[point2*3] &&
+             particlePositions[point1*3 + 1] < particlePositions[testPoint*3 + 1] && particlePositions[testPoint*3 + 1] < particlePositions[point2*3 + 1]) || 
+            (particlePositions[point2*3] < particlePositions[testPoint*3] && particlePositions[testPoint*3] < particlePositions[point1*3] &&
+             particlePositions[point2*3 + 1] < particlePositions[testPoint*3 + 1] && particlePositions[testPoint*3 + 1] < particlePositions[point1*3 + 1])) {
+            // check if they're pointing the same direction
+            if (Math.abs(new THREE.Vector2(particlePositions[point2 * 3] - particlePositions[testPoint * 3],
+                            particlePositions[point2 * 3 + 1] - particlePositions[testPoint * 3 + 1])
+                            .normalize()
+                            .dot(pointVector)) > 0.9 &&
+                Math.abs(new THREE.Vector2(particlePositions[point1 * 3] - particlePositions[testPoint * 3],
+                            particlePositions[point1 * 3 + 1] - particlePositions[testPoint * 3 + 1])
+                            .normalize()
+                            .dot(pointVector)) > 0.9) {
+                // add to array !
+                pathPoints.push(testPoint);
+            }
+        }
+    }
+    if (pathPoints.length) pathPoints.push(point1, point2);
+
+    // rearrange path in order of distance
+    pathPoints.sort((a,b) => {
+        let d1 = Math.sqrt((1000 - particlePositions[a * 3]) ** 2 + 
+                  (1000 - particlePositions[a * 3 + 1]) ** 2);
+        let d2 = Math.sqrt((1000 - particlePositions[b * 3]) ** 2 + 
+                    (1000 - particlePositions[b * 3 + 1]) ** 2);
+        console.log("Distances: " , d1, " ", d2);
+        return d1 - d2;
+    });
+
+    // update indices of buffer geometry
+    for(let j = 1; j < pathPoints.length; j++) {
+        bufferIndex.push(particlePositions[pathPoints[j - 1] * 3],
+                            particlePositions[pathPoints[j - 1] * 3 + 1],
+                            particlePositions[pathPoints[j - 1] * 3 + 2]);
+        bufferIndex.push(particlePositions[pathPoints[j] * 3],
+                            particlePositions[pathPoints[j] * 3 + 1],
+                            particlePositions[pathPoints[j] * 3 + 2]);
+        bufferColor.push(particlePositions[j * 3 + 2] / 100 - 0.1,
+                         0,
+                         1.2 - particlePositions[j * 3 + 2] / 100);
+        bufferColor.push(0.95, 0.95, 0.95)
+    }
+    console.log(bufferIndex)
+    console.log(bufferColor)
+    return {
+        position: bufferIndex,
+        color: bufferColor
+    }
 }
 
 // Scene setup
