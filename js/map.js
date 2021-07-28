@@ -6,7 +6,7 @@ import {vertexShader, fragmentShader} from './shaders.js';
 /* global THREE */
 
 const minPathDistance = 100;
-const lineCount = 2;
+const lineCount = 5;
 const pathLength = 15;
 let container;
 let camera;
@@ -41,7 +41,7 @@ function init() {
     camera.position.set(0, 1400, 0);
 
     clock = new THREE.Clock();
-    clockTime = clock.startTime;
+    clockTime = clock.startTime - 5;
 
     // Create Controls
     // container param allows orbit only in the container, not the whole doc
@@ -164,7 +164,7 @@ function init() {
                 // add path to buffer array
                 for(let j = 0; j < (2 * pathLength - 2) * 3; j++) {
                     linePositions[bufferIter] = buff.position[j];
-                    colors[bufferIter] = buff.color[j];
+                    colors[bufferIter] = buff.color[j] * 0.05;
                     bufferIter = (bufferIter + 1) % ((2 * pathLength - 2) * 3 * lineCount);
                 }
             }
@@ -203,9 +203,10 @@ function init() {
 function update() {
     controls.update();
 
-    // TODO update line art once every five seconds
+    // Redraw a path every 5 seconds
     if(clock.getElapsedTime() - clockTime > 5) {
         clockTime = clock.getElapsedTime();
+        console.log(clockTime)
         
         let buff = getPath();
         // add path to buffer array
@@ -215,6 +216,13 @@ function update() {
             bufferIter = (bufferIter + 1) % ((2 * pathLength - 2) * 3 * lineCount);
         }
         linesMesh.geometry.attributes.position.needsUpdate = true;
+        linesMesh.geometry.attributes.color.needsUpdate = true;
+    } else {
+        // update colors of existing paths
+        for(let i = 0; i < (2 * pathLength - 2) * 3 * lineCount; i++) {
+            // console.log(colors[i])
+            if(colors[i] > .05) colors[i] *= .99;
+        }
         linesMesh.geometry.attributes.color.needsUpdate = true;
     }
 }
@@ -301,8 +309,6 @@ function getPath() {
         bufferColor.push(0.95, 0.95, 0.95)
     }
 
-    console.log(bufferIndex)
-    console.log(bufferColor)
     return {
         position: bufferIndex,
         color: bufferColor
