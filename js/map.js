@@ -221,7 +221,7 @@ function update() {
         // update colors of existing paths
         for(let i = 0; i < (2 * pathLength - 2) * 3 * lineCount; i++) {
             // console.log(colors[i])
-            if(colors[i] > .05) colors[i] *= .99;
+            if(colors[i] > .05) colors[i] *= .995;
         }
         linesMesh.geometry.attributes.color.needsUpdate = true;
     }
