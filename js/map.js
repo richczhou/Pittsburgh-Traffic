@@ -56,7 +56,8 @@ function init() {
     const pitt = new THREE.Group();
     pitt.position.set(100, -100, -25);
     pitt.rotateX(-Math.PI/2);
-    pitt.rotateZ(-Math.PI/4)
+    pitt.rotateZ(-Math.PI/4);
+    pitt.position.z = -100;
     scene.add(pitt);
 
     const scaleFactor = 1200;
@@ -206,7 +207,7 @@ function update() {
     // Redraw a path every 5 seconds
     if(clock.getElapsedTime() - clockTime > 5) {
         clockTime = clock.getElapsedTime();
-        console.log(clockTime)
+        // console.log(clockTime)
         
         let buff = getPath();
         // add path to buffer array

@@ -10,3 +10,48 @@ body {
     width: 100%;
     height: 100%;
 }
+
+#text-container {
+    position: absolute;
+    width: 80%;
+    top: 85%;
+    right: 10%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+h1 {
+    font-family: 'Gill Sans', 'Gill Sans MT', sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+    color: white
+}
+
+h3 {
+    font-family: Helvetica, sans-serif;
+    font-weight: 200;
+    font-size: 11px;
+    color: white;
+    padding-right: 30%;
+    padding-left: 5%;
+    justify-self: start;
+    border-right: 1px white;
+}
+
+#divider1 {
+    position: absolute;
+    top: 86%;
+    left: 34%;
+    width: 1px;
+    height: 40px;
+    background: white;
+}
+
+#divider2 {
+    position: absolute;
+    top: 86%;
+    left: 60%;
+    width: 1px;
+    height: 40px;
+    background: white;
+}
